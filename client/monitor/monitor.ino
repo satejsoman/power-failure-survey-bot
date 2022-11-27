@@ -1,13 +1,23 @@
 #include <WiFiNINA.h>
+#include <ArduinoHttpClient.h>
 
 #include "secrets.h" 
 char ssid[] = SECRET_SSID;    // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
-int keyIndex = 0;             // your network key Index number (needed only for WEP)
 
-int indicator =  LED_BUILTIN;
+// char serverAddress[] = "http://192.168.4.239";
+// int port = 8000;
+
+// WiFiClient wifi;
+// HttpClient client = HttpClient(wifi, serverAddress, port);
+
+WiFiClient wifi;
+HttpClient client = HttpClient(wifi, "httpbin.org");
+
+int indicator = LED_BUILTIN;
 int sentinel = 12;
 int status = WL_IDLE_STATUS;
+bool messageSent = false;
 
 void setup() {
   //Initialize serial and wait for port to open:
@@ -38,11 +48,30 @@ void setup() {
 
 void loop() {
   while (digitalRead(sentinel) == HIGH) {}
+  
   Serial.println("Disconnect detected");
   digitalWrite(indicator, HIGH);  // turn the LED on (HIGH is the voltage level)
   delay(500);              // wait for half a second
   digitalWrite(indicator, LOW);   // turn the LED off by making the voltage LOW
   delay(500);              // wait for half a second
+  
+  if (!messageSent) {
+    Serial.println("making POST request");
+    String contentType = "application/x-www-form-urlencoded";
+    String postData = "name=Alice&age=12";
+
+    client.post("/post", contentType, postData);
+
+    int statusCode = client.responseStatusCode();
+    String response = client.responseBody();
+
+    Serial.print("Status code: ");
+    Serial.println(statusCode);
+    Serial.print("Response: ");
+    Serial.println(response);
+
+    messageSent = true;
+  }
 }
 
 void printWifiData() {
