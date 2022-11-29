@@ -1,20 +1,24 @@
 import json
-from pathlib import Path
-from datetime import datetime
-
 import socket
+from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 
 from twilio.rest import Client
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 with (Path(__file__).parent / ".creds").open() as f:
     creds = json.load(f)
 client = Client(creds['TWILIO_LIVE_ACCOUNT_SID'], creds['TWILIO_LIVE_AUTH_TOKEN'])
 
-# print IP
+# print IPs
+from requests import get
+
+ip = get('https://api.ipify.org').content.decode('utf8')
+print(f'public IP address: {ip}')
+
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
-print(s.getsockname()[0])
+print(f'private IP address: {s.getsockname()[0]}')
 s.close()
 
 def send_message():

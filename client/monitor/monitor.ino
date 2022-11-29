@@ -4,15 +4,10 @@
 #include "secrets.h" 
 char ssid[] = SECRET_SSID;    // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
-
-// char serverAddress[] = "http://192.168.4.239";
-// int port = 8000;
-
-// WiFiClient wifi;
-// HttpClient client = HttpClient(wifi, serverAddress, port);
+char url[]  = CLOUD_URL; 
 
 WiFiClient wifi;
-HttpClient client = HttpClient(wifi, "httpbin.org");
+HttpClient client = HttpClient(wifi, url);
 
 int indicator = LED_BUILTIN;
 int sentinel = 12;
@@ -20,9 +15,13 @@ int status = WL_IDLE_STATUS;
 bool messageSent = false;
 
 void setup() {
+  // set up on-board input and outpin pins
+  pinMode(sentinel, INPUT);
+  pinMode(indicator, OUTPUT);
+  
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
-  while (!Serial) {} // wait for serial port to connect. Needed for native USB port only
+  delay(2000); // hope we get the serial port within 2 seconds, otherwise continue without it
 
   // attempt to connect to WiFi network:
   while (status != WL_CONNECTED) {
@@ -37,12 +36,9 @@ void setup() {
 
   // you're connected now, so print out the data:
   Serial.print("You're connected to the network");
+  digitalWrite(indicator, HIGH);  // turn the LED on (HIGH is the voltage level)
   printCurrentNet();
   printWifiData();
-
-  // set up on-board input and outpin pins
-  pinMode(sentinel, INPUT);
-  pinMode(indicator, OUTPUT);
 
 }
 
@@ -50,17 +46,12 @@ void loop() {
   while (digitalRead(sentinel) == HIGH) {}
   
   Serial.println("Disconnect detected");
-  digitalWrite(indicator, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(500);              // wait for half a second
-  digitalWrite(indicator, LOW);   // turn the LED off by making the voltage LOW
-  delay(500);              // wait for half a second
   
   if (!messageSent) {
     Serial.println("making POST request");
-    String contentType = "application/x-www-form-urlencoded";
-    String postData = "name=Alice&age=12";
+    String contentType = "application/json";
 
-    client.post("/post", contentType, postData);
+    client.post("/test-arduino-fn", contentType, "{}");
 
     int statusCode = client.responseStatusCode();
     String response = client.responseBody();
